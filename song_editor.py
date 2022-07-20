@@ -13,9 +13,9 @@ class SongEditor:
         self.file_name = file_name
 
     def filter_stream(self, **filters) -> None:
-        if 'atrim' in filters and any in filters['atrim']:
+        if 'atrim' in filters and any(filters['atrim']):
             start, end = filters['atrim']
-            
+
             if start and end:
                 self.stream = ffmpeg.filter(self.stream, 'atrim', start=start, end=end)
             elif start:
@@ -30,8 +30,8 @@ class SongEditor:
         new_file_name = os.path.splitext(new_file_name)[0]
         self.stream = ffmpeg.output(self.stream, f'.\music\{new_file_name}.mp3', **{'b:a': bitrate})
         ffmpeg.run(self.stream)
-        self.file_name = new_file_name
-
+        self.file_name = f'.\music\{new_file_name}.mp3'
+    
     def write_ID3_tags(self, ID3tags: Dict[str, str]) -> None:
         # decide whether to ask, overwrite or not if tags already in the file etc.
         song = MP3(self.file_name, ID3=EasyID3)
