@@ -5,6 +5,16 @@ from typing import Dict, Tuple
 
 import utils
 
+class FileFrame(tk.Frame):
+    def __init__(self, master, file_name: str, **kwargs) -> None:
+        super().__init__(master, **kwargs)
+        self.label = tk.Label(self, text=file_name)
+        
+        self.label.pack(side=tk.LEFT)
+        self.checked = tk.IntVar()
+        self.check = tk.Checkbutton(self, variable=self.checked)
+        self.check.pack(side=tk.RIGHT)
+
 
 class TimeEntry(tk.Entry):
     def __init__(self, master, default: str, **kwargs) -> None:
