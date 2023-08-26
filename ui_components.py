@@ -1,9 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 import re
-from typing import Dict, Tuple
+from typing import Tuple
 
 import utils
+from song_tags_finder import find_song_data
+
+SONG_TAGS = ['title', 'artist', 'album', 'date', 'genre']
 
 class FileFrame(tk.Frame):
     def __init__(self, master, file_name: str, **kwargs) -> None:
@@ -46,49 +49,55 @@ class TimeEntry(tk.Entry):
 
 
 class TagsFrame(tk.Frame):
-    def __init__(self, master, tags: Dict[str, str], **kwargs) -> None:
+    def __init__(self, master, file_name:str, **kwargs) -> None:
         super().__init__(master, **kwargs)
-        self.tags = tags
         self.fields = {}
-    
-    def add_field(self, key: str, value: str) -> None:
-        frame = tk.Frame(self)
-
-        label = tk.Label(frame, text=key)
-        entry = tk.Entry(frame)
-
-        if value:
-            entry.insert(0, value)
-
-        label.pack(side=tk.TOP)
-        entry.pack(side=tk.BOTTOM, padx=10)
-        frame.pack(side=tk.LEFT)
-
-        self.fields.update({key: entry})
+        self.add_fields()
+        self.add_button()
+        self.file_name = file_name
     
     def add_fields(self) -> None:
-        for tag in self.tags:
-            self.add_field(tag, self.tags[tag])
+        for tag in SONG_TAGS:
+            frame = tk.Frame(self)
+            label = tk.Label(frame, text=tag)
+            entry = tk.Entry(frame)
 
-    def get_fields_data(self) -> Dict[str, str]:
+            label.pack(side=tk.TOP)
+            entry.pack(side=tk.BOTTOM, padx=10)
+            frame.pack(side=tk.LEFT)
+
+            self.fields.update({tag: entry})
+    
+    def update_fields(self, tags: dict[str, str]) -> None:
+        for tag in tags:
+            entry = self.fields.get(tag)
+            entry.delete(0, 'end')
+            entry.insert(0, tags[tag])
+
+    def get_fields_data(self) -> dict[str, str]:
         tags = {}
         for field in self.fields:
             tags.update({field: self.fields[field].get()})
-        
         return tags
+    
+    def add_button(self) -> None:
+        search_button = tk.Button(self, text='Search', command=self.click_search_button)
+        search_button.pack(side=tk.RIGHT)
+    
+    def click_search_button(self) -> None:
+        tags = find_song_data(self.file_name)
+        self.update_fields(tags)
 
 
 class SongFrame(tk.Frame):
-    def __init__(self, master, file_name: str, song_length: str, tags: Dict[str, str], **kwargs) -> None:
+    def __init__(self, master, file_name: str, song_length: str, **kwargs) -> None:
         super().__init__(master, **kwargs)
         # TODO: clean up, make init smaller
         self.label = tk.Label(self, text=file_name)
         
         self.start_time = TimeEntry(self, default='0:00.000', width=10)
         self.end_time = TimeEntry(self, default=song_length, width=10)
-
-        self.tags_frame = TagsFrame(self, tags)
-        self.tags_frame.add_fields()
+        self.tags_frame = TagsFrame(self, file_name)
 
         separator_horizontal = ttk.Separator(master, orient='horizontal')
 
@@ -97,7 +106,6 @@ class SongFrame(tk.Frame):
         self.label.pack(side=tk.LEFT)
         self.start_time.pack(side=tk.LEFT)
         self.end_time.pack(side=tk.LEFT)
-
         self.tags_frame.pack(side=tk.RIGHT, padx=20, pady=15)
         separator_horizontal.pack(fill='x')
 

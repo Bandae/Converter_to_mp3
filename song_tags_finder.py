@@ -101,10 +101,11 @@ class SongTagsFinder:
             
         return return_dict
 
-    def get_data(self) -> Dict[str, str]:
-        # add a dict as a parameter if the file is already mp3 and has tags
-        genius_data = self.get_song_data_genius()
-        musicbrainz_data = self.get_song_data_musicbrainz()
-        
-        final_data = self.compare_song_data_containers(genius_data, musicbrainz_data)
-        return final_data
+def find_song_data(file_name: str) -> dict[str, str]:
+    # add a dict as a parameter if the file is already mp3 and has tags
+    finder = SongTagsFinder(file_name)
+    genius_data = finder.get_song_data_genius()
+    musicbrainz_data = finder.get_song_data_musicbrainz()
+    
+    final_data = finder.compare_song_data_containers(genius_data, musicbrainz_data)
+    return final_data
