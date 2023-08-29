@@ -60,7 +60,7 @@ class TagsFrame(tk.Frame):
         for tag in SONG_TAGS:
             frame = tk.Frame(self)
             label = tk.Label(frame, text=tag)
-            entry = tk.Entry(frame)
+            entry = tk.Entry(frame, width=15)
 
             label.pack(side=tk.TOP)
             entry.pack(side=tk.BOTTOM, padx=10)
@@ -92,7 +92,6 @@ class TagsFrame(tk.Frame):
 class SongFrame(tk.Frame):
     def __init__(self, master, file_name: str, song_length: str, **kwargs) -> None:
         super().__init__(master, **kwargs)
-        # TODO: clean up, make init smaller
         self.label = tk.Label(self, text=file_name)
         
         self.start_time = TimeEntry(self, default='0:00.000', width=10)

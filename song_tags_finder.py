@@ -1,4 +1,4 @@
-from typing import Optional, Dict
+from typing import Optional
 import re
 
 import requests
@@ -26,7 +26,7 @@ class SongTagsFinder:
         
         return str_lowercase
     
-    def get_song_data_genius(self) -> Optional[Dict[str, str]]:
+    def get_song_data_genius(self) -> Optional[dict[str, str]]:
         try:
             GENIUS_KEY = dotenv_values(".env")["GENIUS_KEY"]
         except KeyError:
@@ -53,7 +53,7 @@ class SongTagsFinder:
         
         return {'title': title, 'artist': artist, 'date': date}
 
-    def get_song_data_musicbrainz(self) -> Optional[Dict[str, str]]:
+    def get_song_data_musicbrainz(self) -> Optional[dict[str, str]]:
         musicbrainzngs.set_useragent('song_scraping_app', '1.0')
         hit = musicbrainzngs.search_recordings(query=self.search_q, limit=1)
 
@@ -69,7 +69,7 @@ class SongTagsFinder:
 
         return {'title': title, 'artist': artist, 'album': album, 'date': date}
 
-    def compare_song_data_containers(self, dict1: Dict[str, str], dict2: Dict[str, str]) -> Dict[str, str]:
+    def compare_song_data_containers(self, dict1: dict[str, str], dict2: dict[str, str]) -> dict[str, str]:
         # fix, unreadable
         
         return_dict = {}

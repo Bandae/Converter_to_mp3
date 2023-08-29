@@ -9,29 +9,35 @@ from ui_components import SongFrame, FileFrame
 import utils
 
 # TODO: handle the console returning "overwrite files? y/n" in the ui
-# TODO: add scroll for too many songs
-# TODO: chyba sa problemy z plikami ponad godzine moze to zobaczyc
-# TODO: wrocic do zapisywania do folderu
-# TODO: pozmieniac wyszukiwanie, zabezpieczyc to z genius szukanie
+# TODO: might have some problems with >1hour videos
+# TODO: save to folder instead of root folder
+# TODO: check tags_finder
+# TODO: only print part of titles to save space
+# TODO: check times in ui_components, maybe make code shorter
 
-class Ui:
+
+class MainWindow(tk.Tk):
     def __init__(self) -> None:
-        self.window = tk.Tk()
-        self.window.geometry('800x600')
-        v = tk.Scrollbar(self.window)
-        v.pack(side=tk.RIGHT, fill=tk.Y)
-        # self.main_frame = tk.Frame(self.window, width='1000', height='700')
-        self.main_frame = tk.Canvas(self.window, yscrollcommand=v.set, width='800', height='4000')
-        # self.main_frame = ScrolledCanvas(self.window)
-        self.main_frame.pack(fill=tk.BOTH)
-        v.config(command=self.main_frame.yview)
-  
+        super().__init__()
+        self.resizable(width=False, height=False)
+
         self.songframes: dict[str: SongFrame] = {}
         self.fileframes: dict[str: FileFrame] = {}
-    
-    def no_files_screen(self) -> None:
-        label = tk.Label(self.main_frame, text="No files found in the root directory")
-        label.pack(padx=40, pady=40)
+
+        self.canvas = tk.Canvas(self)
+        scroll = tk.Scrollbar(self, command=self.canvas.yview)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.canvas.pack(fill=tk.BOTH)
+        self.canvas.configure(yscrollcommand=scroll.set)
+
+        self.frame = tk.Frame(self.canvas)
+        self.canvas.create_window(0, 0, window=self.frame, anchor='nw')
+
+        self.frame.update_idletasks()
+        self.canvas.configure(scrollregion=self.canvas.bbox('all'))
+        self.canvas.bind('<Configure>', self.on_configure_canvas)
+
+        self.check_FFMPEG()
 
     def check_FFMPEG(self) -> None:
         try:
@@ -39,14 +45,14 @@ class Ui:
             self.add_song_selection_screen()
         # except FileNotFoundError:
         except subprocess.CalledProcessError:
-            label = tk.Label(self.main_frame, text="FFMPEG is not installed, or not on PATH")
+            label = tk.Label(self.frame, text="FFMPEG is not installed, or not on PATH")
             label.pack(padx=40, pady=40)
 
     def make_container_for_song(self, file_name: str, song_length: str) -> None:
         if file_name in self.songframes:
             return None
         
-        frame = SongFrame(self.main_frame, file_name, song_length)
+        frame = SongFrame(self.frame, file_name, song_length)
         frame.pack()
         self.songframes.update({file_name: frame})
 
@@ -58,10 +64,11 @@ class Ui:
             frame.destroy()
         self.add_song_parameters_screen(accepted_songs)
         self.accept_button1.destroy()
+        self.canvas.config(width=1000, height=600)
 
     def click_accept_button2(self) -> None:
         self.accept_button2.destroy()
-        progress_bar = Progressbar(self.main_frame, orient=tk.HORIZONTAL, length=500, mode='determinate')
+        progress_bar = Progressbar(self.frame, orient=tk.HORIZONTAL, length=500, mode='determinate')
         progress_bar.pack()
 
         def inside_fn() -> None:
@@ -77,26 +84,37 @@ class Ui:
         files_for_conversion = [f for f in os.listdir() if os.path.splitext(f)[1] in accepted_formats]
 
         if not files_for_conversion:
-            self.no_files_screen()
+            label = tk.Label(self.frame, text="No files found in the root directory")
+            label.pack(padx=40, pady=40)
             return
 
         for f in files_for_conversion:
-            frame = FileFrame(self.main_frame, f, padx=40, pady=20)
+            frame = FileFrame(self.frame, f, width=400, height=50)
             frame.pack()
+            # frames automatically fit size to the child widgets, this line prevents it, so that all checkboxes can line up
+            # needs setting width and height to actually appear
+            frame.pack_propagate(0)
             self.fileframes.update({f: frame})
         
-        self.accept_button1 = tk.Button(self.main_frame, text='Accept', command=self.click_accept_button1)
+        self.accept_button1 = tk.Button(self.frame, text='Accept', command=self.click_accept_button1)
         self.accept_button1.pack()
+        # <configure> event not fired when changing widgets in frame, needs this line
+        self.canvas.config(width=400)
 
     def add_song_parameters_screen(self, file_names: list[str]) -> None:
         for f in file_names:
             self.make_container_for_song(f, utils.time_to_str(utils.get_song_length(f)))
         
-        self.accept_button2 = tk.Button(self.main_frame, text='Accept', command=self.click_accept_button2)
+        self.accept_button2 = tk.Button(self.frame, text='Accept', command=self.click_accept_button2)
         self.accept_button2.pack()
+
+    def on_configure_canvas(self, event) -> None:
+        # w, _ = event.width, event.height
+        # natural = self.frame.winfo_reqwidth()
+        # self.canvas.itemconfigure('inner', width=w if w > natural else natural)
+        self.canvas.configure(scrollregion=self.canvas.bbox('all'))
 
 
 if __name__ == '__main__':
-    window = Ui()
-    window.check_FFMPEG()
-    window.window.mainloop()
+    window = MainWindow()
+    window.mainloop()
