@@ -3,7 +3,6 @@ import subprocess
 
 def get_song_length(file_name: str) -> float:
     '''uses ffprobe to return the length (in seconds) of the file with the specified name, rounded to 3 decimal places'''
-    # TODO: handle possible errors returned in console
     duration = subprocess.check_output(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1', file_name])
     duration = re.search(r'(\d+.\d+)', str(duration))
     
@@ -34,6 +33,10 @@ def time_to_str(time: float) -> str:
     if zeroes_to_add == 3:
         time_as_str += '.'
 
-    time_as_str = time_as_str + '0' * zeroes_to_add
+    time_as_str += '0' * zeroes_to_add
 
     return time_as_str
+
+def shorten_name(name: str, max_len: int) -> str:
+    '''Cuts strings short and adds "..." if the string exceeds some length.'''
+    return name if len(name) <= max_len else name[0:max_len-3] + '...'
